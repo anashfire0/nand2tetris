@@ -1,0 +1,13 @@
+class Hi {
+    field a;
+    static int a;
+    constructor Hi new(int a){
+        a = a;
+    }
+}
+// cool comment
+/* multiple line comments */
+function int abs(int a){
+    a = (2 + 2) + ((2+344));
+    return this;
+}

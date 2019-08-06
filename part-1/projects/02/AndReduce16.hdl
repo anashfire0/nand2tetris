@@ -1,0 +1,29 @@
+
+CHIP AndReduce16 {
+    IN in[16];
+    OUT out;
+
+    PARTS:
+    And (a=in[0], b=in[1], out=in1);
+    And (a=in[2], b=in1, out=in2);
+
+    And (a=in[3], b=in2, out=in3);
+    And (a=in[4], b=in3, out=in4);
+
+    And (a=in[5], b=in4, out=in5);
+    And (a=in[6], b=in5, out=in6);
+
+    And (a=in[7], b=in6, out=in7);
+    And (a=in[8], b=in7, out=in8);
+
+    And (a=in[9], b=in8, out=in9);
+    And (a=in[10], b=in9, out=in10);
+
+    And (a=in[11], b=in10, out=in11);
+    And (a=in[12], b=in11, out=in12);
+
+    And (a=in[13], b=in12, out=in13);
+    And (a=in[14], b=in13, out=in14);
+
+    And (a=in[15], b=in14, out=in15);
+}

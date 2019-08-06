@@ -1,0 +1,19 @@
+
+/** 
+ * Multiplexor:
+ * out = a if sel == 0
+ *       b otherwise
+ */
+
+CHIP Mux {
+    IN a, b, sel;
+    OUT out;
+
+    PARTS:
+    Not (in=sel, out=NOTsel);
+    And (a=a, b=b, out=aANDb);
+    And (a=NOTsel, b=a, out=NOTselANDa);
+    And (a=b, b=sel, out=bANDsel);
+    Or (a=aANDb, b=NOTselANDa, out=or1);
+    Or (a=or1, b=bANDsel, out=out);
+}

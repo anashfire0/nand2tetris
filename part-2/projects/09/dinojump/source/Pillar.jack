@@ -1,0 +1,69 @@
+class Pillar{
+    field int height;
+    field int width;
+    field int distanceFromDino;
+    field int distanceFromLeftScreen;
+    field boolean isHidden;
+
+    constructor Pillar new(int h, int w, boolean isHidden){
+        let height = h;
+        let width = w;
+        let isHidden = isHidden;
+        let distanceFromLeftScreen = 511-width;
+        let distanceFromDino = 511-144-width;
+        do Screen.setColor(~isHidden);
+        do drawPillar();
+
+        return this;
+    }
+
+    method int getDistanceFromDino(){
+        return distanceFromDino;
+    }
+
+    method int getDistanceFromLeftScreen(){
+        return distanceFromLeftScreen;
+    }
+
+    method int getHeight(){
+        return height;
+    }
+    method int getWidth(){
+        return width;
+    }
+
+
+    method boolean getIsHidden(){
+        return isHidden;
+    }
+
+
+    method void dispose() {
+        do Screen.setColor(false);
+        do Screen.drawRectangle(distanceFromLeftScreen, 165-height,
+                                distanceFromLeftScreen+width, 165
+                                );
+        do Memory.deAlloc(this);
+        return;
+
+    }
+
+    method void drawPillar(){
+        do Screen.drawRectangle(distanceFromLeftScreen, 165-height,
+                                distanceFromLeftScreen+width, 165
+                                );
+        do Sys.wait(1);
+        return;
+    }
+
+    method void movePillarByPixel(){
+        if (distanceFromLeftScreen < 1) { return; }
+        do Screen.setColor(false);
+        do drawPillar();
+        let distanceFromLeftScreen = distanceFromLeftScreen - 1;
+        do Screen.setColor(true);
+        do drawPillar();
+        return;
+    }
+
+}

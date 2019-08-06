@@ -1,0 +1,40 @@
+class Main{
+    function void main(){
+        var int highScore, score;
+        var DinoGame game;
+        let highScore = 0;
+        let score = 0;
+
+        //set default high score
+        while(true){
+            if (score > highScore){
+                let highScore = score;
+            } 
+            do Output.moveCursor(0,50);
+            do Output.printString("HI SCORE: ");
+            do Output.printInt(highScore);
+
+            let game = DinoGame.new();
+            do game.run();
+            let score = game.getScore();
+
+            if (score > highScore){
+                let highScore = score;
+            } 
+
+            do Output.moveCursor(0,50);
+            do Output.printString("HI SCORE: ");
+            do Output.printInt(highScore);
+
+            do game.dispose();
+
+            do Sys.wait(2000);
+            do Screen.clearScreen();
+            do Output.moveCursor(10,20);
+            do Output.printString("Game starting again...");
+            do Sys.wait(2000);
+            do Screen.clearScreen();
+        }
+        return;
+    }
+}

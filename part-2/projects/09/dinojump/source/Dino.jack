@@ -1,0 +1,136 @@
+class Dino{
+    field int dinoBaseAddress, startX, startY; // screen location of the dinosaurus
+    field int currentJumpPosition;
+    field int dinoJumpHeight;
+    field boolean shouldRetract;
+    field boolean isLanded;
+    field Array dinoAddresses;
+    field Array dinoXYs;
+    
+    /** Constructs a new Dino object given the location on the screen */
+    constructor Dino new(){
+        let dinoBaseAddress = 4808;
+        let startX = 128;            // Based on dinoBaseAddress being 4808
+        let startX = 150;           // Based on dinoBaseAddress being 4808
+        let currentJumpPosition = 0;
+        let dinoXYs = Array.new(20);
+        let dinoJumpHeight = 40;
+        let shouldRetract = false;
+        let isLanded = false;
+        do drawDino();
+        return this;
+    }
+
+    method boolean getIsLanded(){
+        return isLanded;
+    }
+
+    method Array getDinoXYs(){
+        return dinoXYs;
+    }
+
+    method void setIsLanded(boolean landed){
+        let isLanded = landed;
+        return;
+    }
+
+    method void updateDinoXYs(){
+        let dinoXYs[0] = startX + 16;
+        let dinoXYs[1] = startY + 2 + currentJumpPosition;
+
+        let dinoXYs[2] = startX + 16;
+        let dinoXYs[3] = startY + 3 + currentJumpPosition;
+
+        let dinoXYs[4] = startX + 15;
+        let dinoXYs[5] = startY + 9 + currentJumpPosition;
+
+        let dinoXYs[6] = startX + 13;
+        let dinoXYs[7] = startY + 10 + currentJumpPosition;
+
+        let dinoXYs[8] = startX + 12;
+        let dinoXYs[9] = startY + 11 + currentJumpPosition;
+
+        let dinoXYs[10] = startX + 11;
+        let dinoXYs[11] = startY + 11 + currentJumpPosition;
+
+        let dinoXYs[12] = startX + 10;
+        let dinoXYs[13] = startY + 15 + currentJumpPosition;
+
+        let dinoXYs[14] = startX + 9;
+        let dinoXYs[15] = startY + 15 + currentJumpPosition;
+
+        let dinoXYs[16] = startX + 7;
+        let dinoXYs[17] = startY + 15 + currentJumpPosition;
+
+        let dinoXYs[18] = startX + 6;
+        let dinoXYs[19] = startY + 15 + currentJumpPosition;
+        return;
+    }
+
+    method void drawDino(){
+        var int memAddress;
+        let memAddress = 16384+dinoBaseAddress;
+        do Memory.poke(memAddress+0-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+32-(currentJumpPosition*32), 30720);
+        do Memory.poke(memAddress+64-(currentJumpPosition*32), -3072);
+        do Memory.poke(memAddress+96-(currentJumpPosition*32), -1024);
+        do Memory.poke(memAddress+128-(currentJumpPosition*32), 31745);
+        do Memory.poke(memAddress+160-(currentJumpPosition*32), 7169);
+        do Memory.poke(memAddress+192-(currentJumpPosition*32), 7681);
+        do Memory.poke(memAddress+224-(currentJumpPosition*32), 7939);
+        do Memory.poke(memAddress+256-(currentJumpPosition*32), 32647);
+        do Memory.poke(memAddress+288-(currentJumpPosition*32), 24574);
+        do Memory.poke(memAddress+320-(currentJumpPosition*32), 8188);
+        do Memory.poke(memAddress+352-(currentJumpPosition*32), 4088);
+        do Memory.poke(memAddress+384-(currentJumpPosition*32), 1008);
+        do Memory.poke(memAddress+416-(currentJumpPosition*32), 288);
+        do Memory.poke(memAddress+448-(currentJumpPosition*32), 288);
+        do Memory.poke(memAddress+480-(currentJumpPosition*32), 864);
+        do updateDinoXYs();
+        return;
+    }
+
+    method void eraseDino(){
+        var int memAddress;
+        let memAddress = 16384+dinoBaseAddress;
+        do Memory.poke(memAddress+0-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+32-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+64-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+96-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+128-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+160-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+192-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+224-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+256-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+288-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+320-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+352-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+384-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+416-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+448-(currentJumpPosition*32), 0);
+        do Memory.poke(memAddress+480-(currentJumpPosition*32), 0);
+        return;
+    }
+
+    method void jumpByPixel(){
+        if (currentJumpPosition = dinoJumpHeight){
+            let shouldRetract = true;
+        }
+        if (~shouldRetract) {
+            do eraseDino();
+            let currentJumpPosition = currentJumpPosition + 1;
+            do drawDino();
+        } else {
+            do eraseDino();
+            let currentJumpPosition = currentJumpPosition - 1;
+            do drawDino();
+            if (currentJumpPosition = 0){
+                let isLanded=true;
+                let shouldRetract=false;
+            }
+        }
+        return;
+        
+    }
+}
+    

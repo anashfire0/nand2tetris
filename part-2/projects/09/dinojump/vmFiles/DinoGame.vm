@@ -1,0 +1,221 @@
+function DinoGame.new 0
+push constant 5
+call Memory.alloc 1
+pop pointer 0
+push constant 166
+pop static 0
+push pointer 0
+push constant 20
+push constant 10
+push constant 0
+call DinoGame.getNewPillar 4
+pop this 0
+call Dino.new 0
+pop this 2
+push constant 0
+pop this 3
+push pointer 0
+call DinoGame.setScore 1
+pop temp 0
+push pointer 0
+call DinoGame.drawLand 1
+pop temp 0
+push pointer 0
+return
+function DinoGame.getLandFromTop 0
+push static 0
+return
+function DinoGame.setScore 0
+push argument 0
+pop pointer 0
+push constant 0
+push constant 2
+call Output.moveCursor 2
+pop temp 0
+push constant 7
+call String.new 1
+push constant 83
+call String.appendChar 2
+push constant 67
+call String.appendChar 2
+push constant 79
+call String.appendChar 2
+push constant 82
+call String.appendChar 2
+push constant 69
+call String.appendChar 2
+push constant 58
+call String.appendChar 2
+push constant 32
+call String.appendChar 2
+call Output.printString 1
+pop temp 0
+push this 3
+call Output.printInt 1
+pop temp 0
+push constant 0
+return
+function DinoGame.getScore 0
+push argument 0
+pop pointer 0
+push this 3
+return
+function DinoGame.getNewPillar 0
+push argument 0
+pop pointer 0
+push argument 1
+push argument 2
+push argument 3
+call Pillar.new 3
+return
+function DinoGame.dispose 0
+push argument 0
+pop pointer 0
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return
+function DinoGame.drawLand 0
+push argument 0
+pop pointer 0
+push constant 0
+push static 0
+push constant 511
+push static 0
+call Screen.drawLine 4
+pop temp 0
+push constant 0
+return
+function DinoGame.isContact 0
+push argument 0
+pop pointer 0
+push constant 0
+return
+function DinoGame.checkForHit 5
+push argument 0
+pop pointer 0
+push constant 0
+pop local 2
+push constant 0
+pop local 3
+push this 2
+call Dino.getDinoXYs 1
+pop local 4
+push this 0
+call Pillar.getHeight 1
+pop local 0
+push this 0
+call Pillar.getWidth 1
+pop local 1
+label WHILE_EXP0
+push local 2
+push constant 20
+lt
+not
+if-goto WHILE_END0
+push this 0
+call Pillar.getDistanceFromLeftScreen 1
+push constant 144
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 0
+not
+return
+label IF_FALSE0
+push local 2
+push constant 2
+add
+pop local 2
+goto WHILE_EXP0
+label WHILE_END0
+push constant 0
+return
+function DinoGame.handleJumpingDino 0
+push argument 0
+pop pointer 0
+label WHILE_EXP0
+push this 2
+call Dino.getIsLanded 1
+not
+not
+if-goto WHILE_END0
+push this 2
+call Dino.jumpByPixel 1
+pop temp 0
+push this 0
+call Pillar.movePillarByPixel 1
+pop temp 0
+push constant 1
+call Sys.wait 1
+pop temp 0
+goto WHILE_EXP0
+label WHILE_END0
+push this 2
+push constant 0
+call Dino.setIsLanded 2
+pop temp 0
+push constant 0
+return
+function DinoGame.run 0
+push argument 0
+pop pointer 0
+label WHILE_EXP0
+push constant 0
+not
+not
+if-goto WHILE_END0
+push this 0
+call Pillar.getDistanceFromLeftScreen 1
+push constant 1
+lt
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push this 0
+call Pillar.dispose 1
+pop temp 0
+push this 3
+push constant 1
+add
+pop this 3
+push pointer 0
+call DinoGame.setScore 1
+pop temp 0
+push pointer 0
+push constant 20
+push constant 10
+push constant 0
+call DinoGame.getNewPillar 4
+pop this 0
+label IF_FALSE0
+push this 0
+call Pillar.movePillarByPixel 1
+pop temp 0
+push pointer 0
+call DinoGame.checkForHit 1
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push constant 0
+return
+label IF_FALSE1
+call Keyboard.keyPressed 0
+push constant 32
+eq
+if-goto IF_TRUE2
+goto IF_FALSE2
+label IF_TRUE2
+push pointer 0
+call DinoGame.handleJumpingDino 1
+pop temp 0
+label IF_FALSE2
+push constant 1
+call Sys.wait 1
+pop temp 0
+goto WHILE_EXP0
+label WHILE_END0
+push constant 0
+return

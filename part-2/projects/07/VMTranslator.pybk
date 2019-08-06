@@ -1,0 +1,269 @@
+class Parser:
+
+    command_types = {
+        'C_ARITHMETIC': {'sub', 'add', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not'},
+        'C_PUSH': {'push'},
+        'C_POP': {'pop'},
+        'C_LABEL': {},
+        'C_IF': {},
+        'C_GOTO': {},
+        'C_RETURN': {},
+        'C_CALL': {},
+    }
+
+    def __init__(self, source_file):
+        self.source_file = source_file
+    
+    def strip_comments_and_whitespaces(self, line):
+        ''' removes comments, cleans whitespaces, returns only the instruction '''
+        return line[:line.find('//')].strip()
+    
+    def get_command(self, line):
+        return line.split()[0].strip()
+    
+    def get_command_type(self, current_command, line):
+        for command_type, command in Parser.command_types.items():
+            if current_command in command: return command_type
+        raise Exception(current_command + ': Invalid command')
+    
+    def get_arg1(self, current_command, command_type, line):
+        if command_type == 'C_RETURN': return None
+        if command_type == 'C_ARITHMETIC': return current_command
+        return line.split()[1].strip()
+
+    def get_arg2(self, current_command, command_type, line):
+        if command_type in {'C_PUSH', 'C_POP', 'C_FUNCTION', 'C_CALL'}:
+            return line.split()[2].strip()
+        return None
+    
+    def parse_line(self):
+        with open(self.source_file, 'r') as vm_file:
+            for line in vm_file:
+                line = self.strip_comments_and_whitespaces(line)
+                if not line: continue
+                current_command = self.get_command(line)
+                command_type = self.get_command_type(current_command, line)
+                arg1, arg2 = self.get_arg1(current_command, command_type, line), self.get_arg2(current_command, command_type, line)
+                lexical_elements = {'command': current_command, 'command_type': command_type,
+                                    'arg1': arg1, 'arg2': arg2, 'line': line
+                                    }
+                yield lexical_elements
+
+class CodeWriter:
+    RAM = {'stack': 'SP', 'local': 'LCL', 'this': 'THIS', 'pointer': 'POINTER',
+           'that': 'THAT', 'argument': 'ARG', 'constant': 'CONSTANT'}
+
+    label_counter = 1
+
+    def __init__(self, output_file):
+        self.asm_file = open(output_file, 'w+')
+    
+    def inc_stack_pointer(self):
+        asm_commands = [f'@{CodeWriter.RAM["stack"]}', f'M=M+1']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def dec_stack_pointer(self):
+        asm_commands = [f'@{CodeWriter.RAM["stack"]}', 'M=M-1']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+
+    def star_pointer_to_D(self, pointer='stack', offset='0'):
+        ''' copies the value from the starred variable to register D '''
+        if offset=='0':
+            asm_commands = [f'@{CodeWriter.RAM[pointer]}', f'A=M', f'D=M']
+        else:
+            asm_commands = [f'@{offset}', f'D=A', f'@{CodeWriter.RAM[pointer]}', f'A=M+D', f'D=M']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+
+    def star_pointer_to_register(self, register, pointer='stack'):
+        ''' copies the value from the starred variable to register D '''
+        asm_commands = [f'@{CodeWriter.RAM[pointer]}', f'A=M', f'D=M', f'@{register}', f'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def D_to_star_pointer(self, pointer='stack'):
+        ''' copies the value in register D to the starred variable '''
+        asm_commands = [f'@{CodeWriter.RAM[pointer]}',  f'A=M', f'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def offset_for_temp(self, offset, register='R15'):
+        asm_commands = ['@5', 'D=A', f'@{offset}', 'D=D+A', f'@{register}', 'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def star_register_to_D(self, register='R15'):
+        asm_commands = [f'@{register}', 'A=M', 'D=M']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def offset_to_register(self, segment_pointer, offset, register):
+        asm_commands = [f'@{offset}', f'D=A', f'@{CodeWriter.RAM[segment_pointer]}', f'D=D+M', f'@{register}', f'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def D_to_star_register(self, register):
+        asm_commands = [f'@{register}', f'A=M', f'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def push_const_to_stack(self, const):
+        asm_commands = [f'@{const}', f'D=A', f'@{CodeWriter.RAM["stack"]}', f'A=M', f'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def push_pointer_to_stack(self, segment):
+        asm_commands = [f'@{CodeWriter.RAM[segment]}', f'D=M', f'@{CodeWriter.RAM["stack"]}', f'A=M', f'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+
+    def pop_pointer_from_stack(self, segment):
+        self.star_pointer_to_D()
+        asm_commands = [f'@{CodeWriter.RAM[segment]}', f'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def push_static_variable_to_stack(self, offset):
+        asm_commands = [f'@{self.asm_file.name.split(".")[0].split("/")[-1]}.{offset}', f'D=M']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+        self.D_to_star_pointer()
+
+    def pop_static_variable_from_stack(self, offset):
+        self.star_pointer_to_D()
+        asm_commands = [f'@{self.asm_file.name.split(".")[0].split("/")[-1]}.{offset}', f'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def write_push(self, lexical_elements):
+        segment = lexical_elements.get('arg1')
+        offset = lexical_elements.get('arg2')
+        if segment == 'pointer':
+            segment = 'this' if offset == '0' else 'that'
+            # push pointer 1 --->  *SP=that, SP++
+            self.push_pointer_to_stack(segment)
+        elif segment == 'constant':
+            # push const 200 ---> *SP=const, SP++
+            self.push_const_to_stack(offset)
+        elif segment == 'static':
+            # push static 2 --> *SP = static+2, SP++
+            self.push_static_variable_to_stack(offset)
+        elif segment == 'temp':
+            #push temp 2 --> *SP = temp[2], SP++
+            self.offset_for_temp(offset)
+            self.star_register_to_D()
+            self.D_to_star_pointer()
+        else:
+            # push argument 2 ---> *SP = *(ARG + 2); SP++
+            # push this 6 ---> *SP = *(THIS + 6); SP++
+            self.star_pointer_to_D(pointer=segment, offset=offset)
+            self.D_to_star_pointer()
+        self.inc_stack_pointer()
+    
+    def write_pop(self, lexical_elements):
+        segment = lexical_elements.get('arg1')
+        offset = lexical_elements.get('arg2')
+        self.dec_stack_pointer()
+        if segment == 'pointer':
+            #pop pointer 0 ---> SP--; this=*SP
+            segment = 'this' if offset == '0' else 'that'
+            self.pop_pointer_from_stack(segment)
+        elif segment == 'static':
+            # pop static 2 --> SP--, static+2 = *SP
+            self.pop_static_variable_from_stack(offset)
+        elif segment == 'temp':
+            # pop temp 2 --> SP--, temp[2] = *SP
+            self.offset_for_temp(offset)
+            self.star_pointer_to_D()
+            self.D_to_star_register(register='R15') 
+        else:
+            #pop that 2 --->  SP--; *(that+2) = *SP
+            self.offset_to_register(segment_pointer=segment, offset=offset, register='R15')
+            self.star_pointer_to_D()
+            self.D_to_star_register(register='R15') 
+
+    def add_registers(self):
+        asm_commands = ['@R13', 'D=M', '@R14', 'D=D+M', f'@{CodeWriter.RAM["stack"]}', 'A=M', 'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def sub_registers(self):
+        # R14-R13
+        asm_commands = ['@R13', 'D=M', '@R14', 'D=M-D', f'@{CodeWriter.RAM["stack"]}', 'A=M', 'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def gt_registers(self):
+        #r14 > r13
+        asm_commands = ['@R13', 'D=M', '@R14', 'D=M-D', f'@R14GT{CodeWriter.label_counter}',
+                        'D;JGT', '@SP', 'A=M', 'M=0', f'@NEXT{CodeWriter.label_counter}', '0;JMP',
+                        f'(R14GT{CodeWriter.label_counter})', '@SP', 'A=M', 'M=-1', f'(NEXT{CodeWriter.label_counter})']
+        CodeWriter.label_counter += 1
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+
+    def lt_registers(self):
+        #r14 < r13
+        asm_commands = ['@R13', 'D=M', '@R14', 'D=M-D', f'@R14LT{CodeWriter.label_counter}',
+                        'D;JLT', '@SP', 'A=M', 'M=0', f'@NEXT{CodeWriter.label_counter}', '0;JMP',
+                        f'(R14LT{CodeWriter.label_counter})', '@SP', 'A=M', 'M=-1', f'(NEXT{CodeWriter.label_counter})']
+        CodeWriter.label_counter += 1
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+
+    def eq_register(self):
+        asm_commands = ['@R13', 'D=M','@R14', 'D=D-M',f'@EQ{CodeWriter.label_counter}', 'D;JEQ',
+                        '@SP', 'A=M', 'M=0', f'@NEXT{CodeWriter.label_counter}', '0;JMP',
+                        f'(EQ{CodeWriter.label_counter})', '@SP', 'A=M', 'M=-1', f'(NEXT{CodeWriter.label_counter})']
+        CodeWriter.label_counter += 1
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def and_registers(self):
+        asm_commands = ['@R13', 'D=M', '@R14', 'D=D&M', '@SP', 'A=M', 'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+
+    def or_registers(self):
+        asm_commands = ['@R13', 'D=M', '@R14', 'D=D|M', '@SP', 'A=M', 'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+    
+    def not_register(self):
+        asm_commands = ['@R13', 'D=!M', '@SP', 'A=M','M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+
+    def neg_register(self):
+        asm_commands = ['@R13', 'D=-M', '@SP', 'A=M', 'M=D']
+        self.asm_file.writelines(command+'\n' for command in asm_commands)
+
+    def perform_arithmetic(self, lexical_elements):
+        self.dec_stack_pointer()
+        self.star_pointer_to_register(register='R13')
+
+        if lexical_elements.get('command') not in {'neg', 'not'}:
+            self.dec_stack_pointer()
+            self.star_pointer_to_register(register='R14')
+
+        if lexical_elements.get('command') == 'add':
+            self.add_registers()
+        elif lexical_elements.get('command') == 'sub':
+            self.sub_registers()
+        elif lexical_elements.get('command') == 'gt':
+            self.gt_registers()
+        elif lexical_elements.get('command') == 'lt':
+            self.lt_registers()
+        elif lexical_elements.get('command') == 'or':
+            self.or_registers()
+        elif lexical_elements.get('command') == 'and':
+            self.and_registers()
+        elif lexical_elements.get('command') == 'not':
+            self.not_register()
+        elif lexical_elements.get('command') == 'eq':
+            self.eq_register()
+        elif lexical_elements.get('command') == 'neg':
+            self.neg_register()
+        self.inc_stack_pointer()
+        
+    def write_assembly(self, parser):
+        for lexical_elements in parser.parse_line():
+            #writing command before generating assembly
+            self.asm_file.writelines(['// ' + lexical_elements.get('line') + '\n'])
+            if lexical_elements.get('command_type') == 'C_ARITHMETIC':
+                self.perform_arithmetic(lexical_elements)
+            elif lexical_elements.get('command_type') == 'C_PUSH':
+                self.write_push(lexical_elements)
+            elif lexical_elements.get('command_type') == 'C_POP':
+                self.write_pop(lexical_elements)
+            self.asm_file.write('\n')
+        self.asm_file.close()
+
+
+if __name__ == '__main__':
+    import sys
+    source_file = sys.argv[1]
+    output_file = source_file.split('.')[0] + '.asm'
+    parser = Parser(source_file)
+    codewriter = CodeWriter(output_file)
+    codewriter.write_assembly(parser)

@@ -1,0 +1,105 @@
+class DinoGame{
+    static int LAND_FROM_TOP;
+    field Pillar pillar, pillar2;
+    field Dino dino;
+    field int score;
+    field boolean isGameOver;
+
+    constructor DinoGame new(){
+        let LAND_FROM_TOP=166;
+        let pillar = getNewPillar(20, 10, false);
+        let dino = Dino.new();
+        let score = 0;
+        do setScore();
+        do drawLand();
+        return this;
+    }
+
+    function int getLandFromTop(){
+        return LAND_FROM_TOP;
+    }
+
+    method void setScore(){
+        do Output.moveCursor(0,2);
+        do Output.printString("SCORE: ");
+        do Output.printInt(score);
+        return;
+    }
+
+    method int getScore(){
+        return score;
+    }
+    
+    method Pillar getNewPillar(int height, int width, boolean isHidden){
+        return Pillar.new(height,width, isHidden);
+    }
+
+    method void dispose() {
+      do Memory.deAlloc(this);
+      return;
+    }
+
+    method void drawLand(){
+        do Screen.drawLine(0,LAND_FROM_TOP, 511,LAND_FROM_TOP);
+        return;
+    }
+    
+    method boolean isContact(){
+        return false;
+    }
+
+    method boolean checkForHit(){
+        var int height, width, i;
+        var boolean isXMatched;
+        var Array dinoXYs;
+
+        let i = 0;
+        let isXMatched = false;
+        let dinoXYs = dino.getDinoXYs();
+        let height = pillar.getHeight();
+        let width = pillar.getWidth();
+
+        while (i < 20){
+            if (pillar.getDistanceFromLeftScreen() = 144){
+                return true;
+            } 
+            let i = i+2;
+        }
+
+        return false;
+    }
+
+    method void handleJumpingDino(){
+        while (~dino.getIsLanded()){
+            do dino.jumpByPixel();
+
+            do pillar.movePillarByPixel();
+
+            do Sys.wait(1);
+        }
+        do dino.setIsLanded(false);
+        return;
+    }
+
+    method void run(){
+        while(true){
+            if (pillar.getDistanceFromLeftScreen() < 1){
+                do pillar.dispose();
+                let score = score + 1;
+                do setScore();
+                let pillar = getNewPillar(20, 10, false);
+            }
+
+            do pillar.movePillarByPixel();
+            if(checkForHit()) {
+                return;
+            }
+
+            if (Keyboard.keyPressed() = 32){
+                do handleJumpingDino();
+            }
+            do Sys.wait(1);
+        }
+        return;
+    }
+}
