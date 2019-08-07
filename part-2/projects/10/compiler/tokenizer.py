@@ -67,16 +67,17 @@ class Tokenizer:
                     if next_line.find(r'*/') != -1: break
             return line.strip()
     
-    def look_ahead(self):
+    def look_ahead(self, ahead=0):
         try:
-            return self.all_tokens[self.current_token_pointer+1]
+            return self.all_tokens[self.current_token_pointer+ahead]
         except IndexError:
             return 'END'
     
     def advance(self):
-        self.current_token_pointer += 1
         try:
-            return self.all_tokens[self.current_token_pointer]
+            to_ret = self.all_tokens[self.current_token_pointer]
+            self.current_token_pointer += 1
+            return to_ret
         except IndexError:
             return 'END'
     
@@ -86,6 +87,9 @@ class Tokenizer:
                 line = self.strip_comments_and_whitespaces(line, input_file)
                 if not line: continue
                 for possible_token in Tokenizer.split_symbols(line):
+                    if Tokenizer.is_string(possible_token):
+                        self.all_tokens.append(self.token_type(possible_token.strip()))
+                        continue
                     tokens = possible_token.split()
                     for token in tokens:
                         self.all_tokens.append(self.token_type(token.strip()))

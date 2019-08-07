@@ -3,12 +3,13 @@ class CompilationEngine:
         self.output_file = open(output_file, 'w')
         self.tokenizer = tokenizer
         self.current_indent = 0
+        self.first_idr = True
     
     def inc_indent(self):
-        self.current_indent += 4
+        self.current_indent += 2
 
     def dec_indent(self):
-        self.current_indent -= 4
+        self.current_indent -= 2
     
     def indent_tag(self):
         indentation = ' '*self.current_indent
@@ -16,21 +17,42 @@ class CompilationEngine:
         print(indentation, end='')
     
     def spitTerminal(self):
-        self.output_file.write('<' + self.token_type.lower() + '>')
+        not_default = False
+        if self.token_type == 'stringConst':
+            self.token, self.token_type = self.token.strip('"'), 'stringConstant'
+            not_default = True
+        elif self.token_type == 'intConst':
+            self.token_type = 'integerConstant'
+            not_default = True
+        elif self.token in ['&', '>', '<']:
+            if self.token == '&': self.token = '&amp;'
+            elif self.token == '<': self.token = '&lt;'
+            elif self.token == '>': self.token = '&gt;'
+        self.indent_tag()
+        if not_default:
+            self.output_file.write('<' + self.token_type + '>')
+        else:
+            self.output_file.write('<' + self.token_type.lower() + '>')
         print('<' + self.token_type.lower() + '>', end=' ')
+
         self.output_file.write(' ' + self.token + ' ')
         print(' ' + self.token + ' ', end=' ')
-        self.output_file.write('</' + self.token_type.lower() + '>\n')
-        print('</' + self.token_type.lower() + '>')
 
-        self.indent_tag()
+        if not_default:
+            self.output_file.write('</' + self.token_type + '>\n')
+        else:
+            self.output_file.write('</' + self.token_type.lower() + '>\n')
+        print('</' + self.token_type.lower() + '>')
     
     def spitNonTerminal(self, non_terminal_name, end=False):
-
         if not end:
+            self.indent_tag()
             self.output_file.write('<' + non_terminal_name + '>\n')
             print('<' + non_terminal_name + '>')
+            self.inc_indent()
         else:
+            self.dec_indent()
+            self.indent_tag()
             self.output_file.write('</' + non_terminal_name + '>\n')
             print('</' + non_terminal_name + '>')
     
@@ -64,21 +86,33 @@ class CompilationEngine:
         self.token, self.token_type = self.tokenizer.advance()
         self.grammar_token = grammar_token
 
-
         if grammar_token in ['identifier', 'string', 'int', 'keywordConst', 'unary'] and self.match_grammar(grammar_token):
             return True
 
         if '#' in grammar_token:
-            for possible_match in grammar_token.split('#'):
-                if possible_match in ['identifier', 'string', 'int', 'keywordConst', 'unary'] and self.match_grammar(grammar_token):
-                    break
-                elif possible_match == 'subroutineCall':
-                    self.compileSubroutineCall()
-                    break
-                elif possible_match != grammar_token:
-                    raise Exception(possible_match)
-                else:
-                    self.spitTerminal()
+            if self.token in grammar_token.split('#'):
+                self.spitTerminal()
+                return True
+            elif '0identifier' in grammar_token.split('#') and self.token_type == 'identifier':
+                self.match_grammar('identifier')
+                return True
+            elif 'subroutineCall' in grammar_token.split('#') and self.token_type == 'identifier':
+                self.compileSubroutineCall()
+                return True
+            elif 'keywordConst' in grammar_token.split('#') and self.token_type == 'keyword':
+                self.match_grammar('keywordConst')
+                return True
+            elif 'int' in grammar_token.split('#') and self.token_type == 'intConst':
+                self.match_grammar('int')
+                return True
+            elif 'unary' in grammar_token.split('#') and self.token_type == 'symbol':
+                self.match_grammar('unary')
+                return True
+            elif 'string' in grammar_token.split('#') and self.token_type == 'stringConst':
+                self.match_grammar('string')
+                return True
+            else:
+                raise Exception(self.token)
 
         if self.token != grammar_token:
             raise Exception(self.token)
@@ -87,100 +121,102 @@ class CompilationEngine:
     
     def compileTerm(self):
         self.spitNonTerminal('term')
-        self.inc_indent()
         
-        self.compileTerm()
+        if self.tokenizer.look_ahead()[0] in ['-', '~']:
+            self.eat('unary')
+            self.compileTerm()
+        elif self.tokenizer.look_ahead()[1] == 'identifier' and self.tokenizer.look_ahead(1)[0] == '.':
+            self.compileSubroutineCall()
+        elif self.tokenizer.look_ahead()[1] == 'identifier' and self.tokenizer.look_ahead(1)[0] == '[':
+            self.eat('identifier')
+            self.eat('[')
+            self.compileExpression()
+            self.eat(']')
+        elif self.tokenizer.look_ahead()[1] in ['intConst', 'stringConst', 'identifier', 'keyword']:
+            self.eat('int#unary#string#0identifier#keywordConst#subroutineCall')
+        elif '(' in self.tokenizer.look_ahead()[0]:
+            self.eat('(')
+            self.compileExpression()
+            self.eat(')')
+        else:
+            raise Exception(self.token)
+
+        self.spitNonTerminal('term', end=True)
     
     def compileOp(self):
-        self.spitNonTerminal('op')
-        self.inc_indent()
-
         self.eat('+#=#-#/#*#>#<#&#|')
-
-        self.dec_indent()
-        self.spitNonTerminal('op', end=True)
     
     def compileExpression(self):
         self.spitNonTerminal('expression')
-        self.inc_indent()
 
         self.compileTerm()
         if self.tokenizer.look_ahead()[0] in ['+', '=', '-', '/', '*', '>', '<', '&', '|']:
             self.compileOp()
             self.compileTerm()
         
-        self.dec_indent()
         self.spitNonTerminal('expression', end=True)
     
     def compileExpressionList(self):
-        self.spitNonTerminal('expressionList')
-        self.inc_indent()
-
         if self.tokenizer.look_ahead()[1] in ['intConst', 'stringConst', 'identifier'] or \
-            self.tokenizer.look_ahead()[0] in ['this', 'null', 'true', 'false']:
+            self.tokenizer.look_ahead()[0] in ['this', 'null', 'true', 'false', '(', ')', '-', '~']:
             self.compileExpression()
 
             while(self.tokenizer.look_ahead()[0] == ','):
+                self.eat(',')
                 self.compileExpression()
-        
-        self.dec_indent()
-        self.spitNonTerminal('expressionList', end=True)
-
 
     def compileSubroutineCall(self):
-        self.spitNonTerminal('subroutineCall')
-        self.inc_indent()
-
         self.eat('identifier')
         if self.tokenizer.look_ahead()[0] == '.':
             self.eat('.')
             self.eat('identifier')
         self.eat('(')
-        self.compileExpressionList()
+        self.spitNonTerminal('expressionList')
+        if self.tokenizer.look_ahead()[0] != ')':
+            self.compileExpressionList()
+        self.spitNonTerminal('expressionList', end=True)
         self.eat(')')
-
-        self.dec_indent()
-        self.spitNonTerminal('subroutineCall', end=True)
     
     def compileIfStatement(self):
         self.spitNonTerminal('ifStatement')
-        self.inc_indent()
 
         self.eat('if')
         self.eat('(')
         self.compileExpression()
         self.eat(')')
         self.eat('{')
+
         self.compileStatements()
+
         self.eat('}')
 
         if self.tokenizer.look_ahead()[0] == 'else':
             self.eat('else')
             self.eat('{')
+           
             self.compileStatements()
+
             self.eat('}')
         
-        self.dec_indent()
         self.spitNonTerminal('ifStatement', end=True)
 
     def compileWhileStatement(self):
         self.spitNonTerminal('whileStatement')
-        self.inc_indent()
 
         self.eat('while')
         self.eat('(')
         self.compileExpression()
         self.eat(')')
         self.eat('{')
+
         self.compileStatements()
+
         self.eat('}')
 
-        self.dec_indent()
         self.spitNonTerminal('whileStatement', end=True)
     
     def compileLetStatement(self):
         self.spitNonTerminal('letStatement')
-        self.inc_indent()
 
         self.eat('let')
         self.eat('identifier')
@@ -194,35 +230,49 @@ class CompilationEngine:
         self.compileExpression()
         self.eat(';')
 
-        self.dec_indent()
         self.spitNonTerminal('letStatement', end=True)
     
     def compileDoStatement(self):
         self.spitNonTerminal('doStatement')
-        self.inc_indent()
 
         self.eat('do')
         self.compileSubroutineCall()
         self.eat(';')
 
-        self.dec_indent()
         self.spitNonTerminal('doStatement', end=True)
     
     def compileReturnStatement(self):
         self.spitNonTerminal('returnStatement')
-        self.inc_indent()
 
         self.eat('return')
         if self.tokenizer.look_ahead()[0] != ';':
             self.compileExpression()
+        self.eat(';')
         
-        self.dec_indent()
         self.spitNonTerminal('returnStatement', end=True)
 
     
-    def compileStatements(self):
+    def _compileStatements(self, not_spit=False):
         if self.tokenizer.look_ahead()[0] not in ['let', 'if', 'while', 'do', 'return']:
             return
+        
+        if self.tokenizer.look_ahead()[0] == 'if':
+            self.spitNonTerminal('statements')
+            self.compileIfStatement()
+            self.spitNonTerminal('statements', True)
+        elif self.tokenizer.look_ahead()[0] == 'while':
+            self.spitNonTerminal('statements')
+            self.compileWhileStatement()
+            self.spitNonTerminal('statements', True)
+        elif self.tokenizer.look_ahead()[0] == 'let':
+            self.compileLetStatement()
+        elif self.tokenizer.look_ahead()[0] == 'do':
+            self.compileDoStatement()
+        elif self.tokenizer.look_ahead()[0] == 'return':
+            self.compileReturnStatement()
+        self.compileStatements()
+    
+    def compileStatement(self):
         if self.tokenizer.look_ahead()[0] == 'if':
             self.compileIfStatement()
         elif self.tokenizer.look_ahead()[0] == 'while':
@@ -233,18 +283,20 @@ class CompilationEngine:
             self.compileDoStatement()
         elif self.tokenizer.look_ahead()[0] == 'return':
             self.compileReturnStatement()
-
+    
+    def compileStatements(self):
+        if (self.tokenizer.look_ahead()[0] in ['let', 'do', 'return', 'if', 'while']):
+            self.spitNonTerminal('statements')
+            while (self.tokenizer.look_ahead()[0] in ['let', 'do', 'return', 'if', 'while']):
+                self.compileStatement()
+            self.spitNonTerminal('statements', True)
+    
     def compileType(self):
-        self.spitNonTerminal('type')
-        self.inc_indent()
-        self.eat('int|char|boolean|identifier')
-        self.dec_indent()
-        self.spitNonTerminal('type', end=True)
+        self.eat('int#char#boolean#0identifier')
 
     def compileClassVarDec(self):
-        self.inc_indent()
 
-        self.eat('static|field')
+        self.eat('static#field')
         self.compileType()
         self.eat('identifier')
 
@@ -255,9 +307,6 @@ class CompilationEngine:
         self.eat(';')
     
     def compileParameterList(self):
-        self.spitNonTerminal('parameterList')
-        self.inc_indent()
-
         self.compileType()
         self.eat('identifier')
 
@@ -265,13 +314,9 @@ class CompilationEngine:
             self.eat(',')
             self.compileType()
             self.eat('identifier')
-        
-        self.dec_indent()
-        self.spitNonTerminal('parameterList', end=True)
-    
+
     def compileVarDec(self):
         self.spitNonTerminal('varDec')
-        self.inc_indent()
 
         self.eat('var')
         self.compileType()
@@ -282,28 +327,22 @@ class CompilationEngine:
             self.eat('identifier')
         self.eat(';')
 
-        self.dec_indent()
         self.spitNonTerminal('varDec', end=True)
-    
+
     def compileSubroutineBody(self):
         self.spitNonTerminal('subroutineBody')
-        self.inc_indent()
 
         self.eat('{')
         while (self.tokenizer.look_ahead()[0] == 'var'):
             self.compileVarDec()
-        
         self.compileStatements()
+
         self.eat('}')
 
-        self.dec_indent()
         self.spitNonTerminal('subroutineBody', end=True)
 
     def compileSubroutineDec(self):
-        self.spitNonTerminal('subroutineDec')
-        self.inc_indent()
-
-        self.eat('constructor|function|method')
+        self.eat('constructor#function#method')
         if self.tokenizer.look_ahead()[0] == 'void':
             self.eat('void')
         else:
@@ -312,43 +351,33 @@ class CompilationEngine:
 
         self.eat('(')
 
+        self.spitNonTerminal('parameterList')
         if self.tokenizer.look_ahead()[0] != ')':
             self.compileParameterList()
+        self.spitNonTerminal('parameterList', end=True)
         self.eat(')')
 
         self.compileSubroutineBody()
 
-        self.dec_indent()
-        self.spitNonTerminal('subroutine', end=True)
-
     def compileClass(self):
         self.spitNonTerminal('class')
-        self.inc_indent()
-        self.indent_tag()
-
+    
+        self.eat('class')
         self.eat('identifier')
         self.eat('{')
 
-        if self.tokenizer.look_ahead()[0] in ['static', 'field']:
+        while(self.tokenizer.look_ahead()[0] in ['static', 'field']):
             self.spitNonTerminal('classVarDec')
-
-            while(self.tokenizer.look_ahead()[0] in ['static', 'field']):
-                self.compileClassVarDec()
-            
+            self.compileClassVarDec()
             self.spitNonTerminal('classVarDec', end=True)
-        
-        if self.tokenizer.look_ahead()[0] in ['constructor', 'function', 'method']:
+    
+        while(self.tokenizer.look_ahead()[0] in ['constructor', 'function', 'method']):
             self.spitNonTerminal('subroutineDec')
-
-            while(self.tokenizer.look_ahead()[0] in ['constructor', 'function', 'method']):
-                self.compileSubroutineDec()
-            
+            self.compileSubroutineDec()
             self.spitNonTerminal('subroutineDec', end=True)
         
         self.eat('}')
     
-        self.dec_indent()
-        self.indent_tag()
         self.spitNonTerminal('class', end=True)
     
     def run(self):
