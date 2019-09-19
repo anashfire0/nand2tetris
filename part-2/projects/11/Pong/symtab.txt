@@ -1,0 +1,270 @@
+----------------------------------------------------------------------------------------------------
+Main
+<EMPTY TABLE>
+main
+('game', 'PongGame', 'local', 0)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+new
+('Ax', 'int', 'arg', 0)
+('Ay', 'int', 'arg', 1)
+('AleftWall', 'int', 'arg', 2)
+('ArightWall', 'int', 'arg', 3)
+('AtopWall', 'int', 'arg', 4)
+('AbottomWall', 'int', 'arg', 5)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+Ball
+('x', 'int', 'field', 0)
+('y', 'int', 'field', 1)
+('lengthx', 'int', 'field', 2)
+('lengthy', 'int', 'field', 3)
+('d', 'int', 'field', 4)
+('straightD', 'int', 'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+dispose
+('this', 'Ball', 'arg', 0)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+Ball
+('x', 'int', 'field', 0)
+('y', 'int', 'field', 1)
+('lengthx', 'int', 'field', 2)
+('lengthy', 'int', 'field', 3)
+('d', 'int', 'field', 4)
+('straightD', 'int', 'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+show
+('this', 'Ball', 'arg', 0)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+Ball
+('x', 'int', 'field', 0)
+('y', 'int', 'field', 1)
+('lengthx', 'int', 'field', 2)
+('lengthy', 'int', 'field', 3)
+('d', 'int', 'field', 4)
+('straightD', 'int', 'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+hide
+('this', 'Ball', 'arg', 0)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+Ball
+('x', 'int', 'field', 0)
+('y', 'int', 'field', 1)
+('lengthx', 'int', 'field', 2)
+('lengthy', 'int', 'field', 3)
+('d', 'int', 'field', 4)
+('straightD', 'int', 'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+draw
+('this', 'Ball', 'arg', 0)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+Ball
+('x', 'int', 'field', 0)
+('y', 'int', 'field', 1)
+('lengthx', 'int', 'field', 2)
+('lengthy', 'int', 'field', 3)
+('d', 'int', 'field', 4)
+('straightD', 'int', 'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+getLeft
+('this', 'Ball', 'arg', 0)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+Ball
+('x', 'int', 'field', 0)
+('y', 'int', 'field', 1)
+('lengthx', 'int', 'field', 2)
+('lengthy', 'int', 'field', 3)
+('d', 'int', 'field', 4)
+('straightD', 'int', 'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+getRight
+('this', 'Ball', 'arg', 0)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+Ball
+('x', 'int', 'field', 0)
+('y', 'int', 'field', 1)
+('lengthx', 'int', 'field', 2)
+('lengthy', 'int', 'field', 3)
+('d', 'int', 'field', 4)
+('straightD', 'int', 'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+setDestination
+('this', 'Ball', 'arg', 0)
+('destx', 'int', 'arg', 1)
+('desty', 'int', 'arg', 2)
+('dx', 'int', 'local', 0)
+('dy', 'int', 'local', 1)
+('temp', 'int', 'local', 2)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+Ball
+('x', 'int', 'field', 0)
+('y', 'int', 'field', 1)
+('lengthx', 'int', 'field', 2)
+('lengthy', 'int', 'field', 3)
+('d', 'int', 'field', 4)
+('straightD', 'int', 'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+move
+('this', 'Ball', 'arg', 0)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+Ball
+('x', 'int', 'field', 0)
+('y', 'int', 'field', 1)
+('lengthx', 'int', 'field', 2)
+('lengthy', 'int', 'field', 3)
+('d', 'int', 'field', 4)
+('straightD', 'int', 'field', 5)
+('diagonalD', 'int', 'field', 6)
+('invert', 'boolean', 'field', 7)
+('positivex', 'boolean', 'field', 8)
+('positivey', 'boolean', 'field', 9)
+('leftWall', 'int', 'field', 10)
+('rightWall', 'int', 'field', 11)
+('topWall', 'int', 'field', 12)
+('bottomWall', 'int', 'field', 13)
+('wall', 'int', 'field', 14)
+bounce
+('this', 'Ball', 'arg', 0)
+('bouncingDirection', 'int', 'arg', 1)
+('newx', 'int', 'local', 0)
+('newy', 'int', 'local', 1)
+('divLengthx', 'int', 'local', 2)
+('divLengthy', 'int', 'local', 3)
+('factor', 'int', 'local', 4)
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
