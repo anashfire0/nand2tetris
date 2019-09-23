@@ -18,7 +18,7 @@ class Screen {
     /** Initializes the Screen. */
     function void init() {
         var int n;
-        let powersOfTwo = Array.new(15);
+        let powersOfTwo = Array.new(16);
         let powersOfTwo[0] = 1;
         let n = 1;
         while(n < 16){

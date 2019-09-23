@@ -245,7 +245,7 @@ class Output {
     /** Displays the given integer starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printInt(int i) {
-        var string intHolder;
+        var String intHolder;
         let intHolder = String.new(16);
         do intHolder.setInt(i);
         do Output.printString(intHolder);

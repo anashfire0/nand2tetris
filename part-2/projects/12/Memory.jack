@@ -9,26 +9,80 @@
  * consists of 32,768 words, each holding a 16-bit binary number.
  */ 
 class Memory {
+    static Array ram;
+    static Array freeList;
+    static int heapBase;
+
+    static int chunkLength;
+    static int nextChunk;
 
     /** Initializes the class. */
     function void init() {
+        let ram = 0;
+        let heapBase = 2048;
+        let freeList = heapBase;
+        let chunkLength = 0;
+        let nextChunk = 1;
+        let freeList[0] = 14335;
+        let freeList[1] = null;
+        return;
     }
+
 
     /** Returns the RAM value at the given address. */
     function int peek(int address) {
+        return ram[address];
     }
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
+        let ram[address] = value;
+        return;
+    }
+
+    function int getSpaceFromFreeList(int size){
+        var Array chunk, beforeChunk, afterChunk;
+        let beforeChunk = 0;
+        let chunk = freeList;
+        // traversal stops at the first available chunk
+        while (chunk[chunkLength] < size){
+            //traverse the freeList
+            let beforeChunk = chunk;
+            let chunk = chunk[nextChunk];
+
+            if (chunk=null){
+                //not found
+                return -1;
+            }
+        }
+
+        let afterChunk = chunk + size + 2;
+        let afterChunk[chunkLength] = chunk[chunkLength] - size -2;
+        let afterChunk[nextChunk] = chunk[nextChunk];
+        let chunk[chunkLength] = size;
+        let chunk[nextChunk] = null;
+        
+        if (beforeChunk = 0){
+            let freeList = afterChunk;
+        } else {
+            let beforeChunk[nextChunk] = afterChunk;
+        }
+        return chunk + 2;
     }
 
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
     function int alloc(int size) {
+        return Memory.getSpaceFromFreeList(size);
     }
 
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
     function void deAlloc(Array o) {
+        var Array chunk;
+        let chunk = o - 2;
+        let chunk[nextChunk] = freeList;
+        let freeList = chunk;
+        return;
     }    
 }

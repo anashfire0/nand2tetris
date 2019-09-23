@@ -1,0 +1,230 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Screen.jack
+
+/**
+ * A library of functions for displaying graphics on the screen.
+ * The Hack physical screen consists of 512 rows (indexed 0..511, top to bottom)
+ * of 256 pixels each (indexed 0..255, left to right). The top left pixel on 
+ * the screen is indexed (0,0).
+ */
+class Screen {
+
+    static boolean currentColor;
+    static Array powersOfTwo;
+    static Array screenAddresses;
+
+    /** Initializes the Screen. */
+    function void init() {
+        var int n;
+        let powersOfTwo = Array.new(15);
+        let powersOfTwo[0] = 1;
+        let n = 1;
+        while(n < 16){
+            let powersOfTwo[n] = powersOfTwo[n-1] * 2;
+            let n = n+1;
+        }
+        return;
+    }
+
+    /** Erases the entire screen. */
+    function void clearScreen() {
+        var int totalScreenBytes;
+        let totalScreenBytes = 0;
+        while (totalScreenBytes < 8192){
+            let screenAddresses[totalScreenBytes] = 0;
+            let totalScreenBytes = totalScreenBytes + 1;
+        }
+        let currentColor = 0;
+        return;
+    }
+
+    /** Sets the current color, to be used for all subsequent drawXXX commands.
+     *  Black is represented by true, white by false. */
+    function void setColor(boolean b) {
+        let currentColor = b;
+        return;
+    }
+
+    function int mod(int x, int y){
+        var int q;
+        let q = x/y;
+        return x - (q*y);
+    }
+
+    /** Draws the (x,y) pixel, using the current color. */
+    function void drawPixel(int x, int y) {
+        var int addr, bitToChange, value;
+        let addr =(y*32) + (x/16);
+        let value = screenAddresses[addr];
+        let bitToChange = Screen.mod(x, 16);
+
+        if (currentColor){
+            //set black
+            let value  = value | powersOfTwo[x & 15];
+        } else {
+            //set white
+            let value = value & ~(powersOfTwo[x&15]);
+        }
+        let screenAddresses[addr] = value;
+        return;
+    }
+
+    function void drawRise(int x1, int dx, int y1, int dy) {
+        var int a, b, diff;
+        let a = 0;
+        let b = 0;
+        let diff = 0;
+        while (~(a > dx) & ~(b > dy)) {
+            do Screen.drawPixel(x1 + a, y1 - b);
+            if (diff < 0) {
+                let a = a + 1;
+                let diff = diff + dy;
+            }
+            else {
+                let b = b + 1;
+                let diff = diff - dx;
+            }
+        }
+        return;
+    }
+
+        /* Prerequisites: dx >=0 and dy >=0 */
+    function void drawFall(int x1, int dx, int y1, int dy) {
+        var int a, b, diff;
+        let a = 0;
+        let b = 0;
+        let diff = 0;
+        while (~(a > dx) & ~(b > dy)) {
+            do Screen.drawPixel(x1 + a, y1 + b);
+            if (diff < 0) {
+                let a = a + 1;
+                let diff = diff + dy;
+            }
+            else {
+                let b = b + 1;
+                let diff = diff - dx;
+            }
+        }
+        return;
+    }
+
+        /* Prerequisites: y1 <= y2 */
+    function void drawVertical(int x, int y1, int y2) {
+        var int y;
+        let y = y1;
+        while (~(y > y2)) {
+            do Screen.drawPixel(x, y);
+            let y = y + 1;
+        }
+        return;
+    }
+
+    /* Prerequisites: x1 <= x2 */
+    function void drawHorizontal(int x1, int x2, int y) {
+        var int x, bit, addr, word;
+        let x = x1;
+        let bit = x & 15;
+        let addr = 32 * y + (x / 16);
+        let word = screenAddresses[addr];
+
+        if (currentColor) {
+            while (~(x > x2)) {
+                let word = word | powersOfTwo[bit];
+                let x = x + 1;
+                let bit = x & 15;
+
+                if (bit = 0) {
+                    let screenAddresses[addr] = word;
+                    let addr = addr + 1;
+                    let word = screenAddresses[addr];
+                }
+            }
+        }
+        else {
+            while (~(x > x2)) {
+                let word = word & ~powersOfTwo[bit];
+                let x = x + 1;
+                let bit = x & 15;
+
+                if (bit = 0) {
+                    let screenAddresses[addr] = word;
+                    let addr = addr + 1;
+                    let word = screenAddresses[addr];
+                }
+            }
+        }
+
+        let screenAddresses[addr] = word;
+        return;
+    }
+
+    /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
+    function void drawLine(int x1, int y1, int x2, int y2) {
+        var int dx, dy, a, b, diff;
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+
+        if (dx = 0){
+            if (dy < 0){
+                do Screen.drawVertical(x1, y2, y1);
+            } else {
+                do Screen.drawVertical(x1, y1, y2);
+            }
+        } else {
+            let dy = y2 - y1;
+            if (dy = 0){
+                if (dx < 0){
+                    do Screen.drawHorizontal(x2, x1, y1);
+                } else {
+                    do Screen.drawHorizontal(x1, x2, y1);
+                }
+            } else {
+                if (dx < 0){
+                    if (dy < 0) {
+                        do Screen.drawFall(x2, -dx, y2, -dy);
+                    }
+                    else {
+                        do Screen.drawRise(x2, -dx, y2, dy);
+                    } 
+                } else {
+                    if (dy < 0) {
+                        do Screen.drawRise(x1, dx, y1, -dy);
+                    }
+                    else {
+                        do Screen.drawFall(x1, dx, y1, dy);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    /** Draws a filled rectangle whose top left corner is (x1, y1)
+     * and bottom right corner is (x2,y2), using the current color. */
+    function void drawRectangle(int x1, int y1, int x2, int y2) {
+        //keeping the width same and changing the height by one pixel for each drawLine
+        var int y;
+        let y = y1;
+        while (~(y > y2)) {
+            do Screen.drawHorizontal(x1, x2, y);
+            let y = y + 1;
+        }
+        return;
+    }
+
+    /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+    function void drawCircle(int x, int y, int r) {
+        var int r2, dx, dy;
+        let r2 = r * r;
+        let dy = -r;
+        while (~(dy > r)) {
+            let dx = Math.sqrt(r2 - (dy * dy));
+            do Screen.drawHorizontal(x - dx, x + dx, y + dy);
+            let dy = dy + 1;
+        }
+        return;
+
+    }
+}
